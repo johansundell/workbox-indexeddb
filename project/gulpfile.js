@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+const workboxBuild = require('workbox-build');
 const gulp = require('gulp');
 const del = require('del');
 
@@ -29,9 +30,32 @@ const copy = () => {
 gulp.task('copy', copy);
 
 // TODO - add "service worker" task here
+const serviceWorker = () => {
+  return workboxBuild.injectManifest({
+    swSrc: 'app/sw.js',
+    swDest: 'build/sw.js',
+    globDirectory: 'build',
+    globPatterns: [
+      'style/main.css',
+      'index.html',
+      'js/idb-promised.js',
+      'js/main.js',
+      'images/**/*.*',
+      'manifest.json'
+    ]
+  }).then(resources => {
+    console.log(`Injected ${resources.count} resources for precaching, ` +
+        `totaling ${resources.size} bytes.`);
+  }).catch(err => {
+    console.log('Uh oh 😬', err);
+  });
+}
+gulp.task('service-worker', serviceWorker);
 
 // This is the app's build process
-const build = gulp.series('clean', 'copy');
+//const build = gulp.series('clean', 'copy');
+//gulp.task('build', build);
+const build = gulp.series('clean', 'copy', 'service-worker');
 gulp.task('build', build);
 
 // Watch our "app" files & rebuild whenever they change
